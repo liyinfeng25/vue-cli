@@ -120,8 +120,8 @@ module.exports = class Generator {
     this.afterInvokeCbs = afterInvokeCbs
     this.afterAnyInvokeCbs = afterAnyInvokeCbs
     this.configTransforms = {}
-    this.defaultConfigTransforms = defaultConfigTransforms
-    this.reservedConfigTransforms = reservedConfigTransforms
+    this.defaultConfigTransforms = defaultConfigTransforms     // 默认的配置文件
+    this.reservedConfigTransforms = reservedConfigTransforms   // 保留的配置文件 vue.config.js
     this.invoking = invoking
     // for conflict resolution
     this.depSources = {}
@@ -136,6 +136,7 @@ module.exports = class Generator {
     // exit messages
     this.exitLogs = []
 
+    //Tag: step1: 加载全部的插件依赖
     // load all the other plugins
     this.allPlugins = this.resolveAllPlugins()
 
@@ -147,6 +148,7 @@ module.exports = class Generator {
     this.rootOptions = rootOptions
   }
 
+  // 初始化全部的插件，调用各个插件的 apply 函数
   async initPlugins () {
     const { rootOptions, invoking } = this
     const pluginIds = this.plugins.map(p => p.id)
@@ -190,6 +192,7 @@ module.exports = class Generator {
     this.afterAnyInvokeCbs = afterAnyInvokeCbsFromPlugins
   }
 
+  //Tag: step2: 调动 genetator 函数，生成对应的文件
   async generate ({
     extractConfigFiles = false,
     checkExisting = false
@@ -200,11 +203,17 @@ module.exports = class Generator {
     const initialFiles = Object.assign({}, this.files)
     // extract configs from package.json into dedicated files.
     this.extractConfigFiles(extractConfigFiles, checkExisting)
+
+    // 加载各自的 render 函数
     // wait for file resolve
     await this.resolveFiles()
+    
+    // 对 package.json 的字段进行了排序并将 package.json 转化为 json 字符串添加到项目的 files 中
     // set package.json
     this.sortPkg()
     this.files['package.json'] = JSON.stringify(this.pkg, null, 2) + '\n'
+
+    // 将内存模板文件写入文件中，此时源码全部在 this.file 中
     // write/update file tree to disk
     await writeFileTree(this.context, this.files, initialFiles, this.filesModifyRecord)
   }
@@ -291,6 +300,7 @@ module.exports = class Generator {
     debug('vue:cli-pkg')(this.pkg)
   }
 
+  //step1: 加载全部的插件依赖
   resolveAllPlugins () {
     const allPlugins = []
     Object.keys(this.pkg.dependencies || {})
@@ -304,8 +314,10 @@ module.exports = class Generator {
     return sortPlugins(allPlugins)
   }
 
+  // 
   async resolveFiles () {
     const files = this.files
+    // 执行各自插件的 render 函数，将生成的模板加到 file 中
     for (const middleware of this.fileMiddlewares) {
       await middleware(files, ejs.render)
     }

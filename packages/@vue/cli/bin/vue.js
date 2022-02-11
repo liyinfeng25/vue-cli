@@ -2,6 +2,7 @@
 
 // Check node version before requiring/doing anything else
 // The user may be on a very old node version
+console.log('_______________调试 vue 脚手架_______________')
 
 const { chalk, semver } = require('@vue/cli-shared-utils')
 const requiredVersion = require('../package.json').engines.node
@@ -41,6 +42,7 @@ program
   .version(`@vue/cli ${require('../package').version}`)
   .usage('<command> [options]')
 
+//Tag: 创建项目
 program
   .command('create <app-name>')
   .description('create a new project powered by vue-cli-service')
@@ -58,6 +60,7 @@ program
   .option('-b, --bare', 'Scaffold project without beginner instructions')
   .option('--skipGetStarted', 'Skip displaying "Get started" instructions')
   .action((name, options) => {
+    //info: 输入参数过多时，提示不合法
     if (minimist(process.argv.slice(3))._.length > 1) {
       console.log(chalk.yellow('\n Info: You provided more than one argument. The first one will be used as the app\'s name, the rest are ignored.'))
     }
@@ -65,6 +68,7 @@ program
     if (process.argv.includes('-g') || process.argv.includes('--git')) {
       options.forceGit = true
     }
+    // 执行创建项目对应文件
     require('../lib/create')(name, options)
   })
 

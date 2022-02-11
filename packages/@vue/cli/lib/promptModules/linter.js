@@ -1,6 +1,7 @@
 module.exports = cli => {
   const { chalk, hasGit } = require('@vue/cli-shared-utils')
 
+  // injectFeature： 设置初始预设选项+状态
   cli.injectFeature({
     name: 'Linter / Formatter',
     value: 'linter',
@@ -11,6 +12,7 @@ module.exports = cli => {
     checked: true
   })
 
+  // injectPrompt: 当前预设选项对应的 prompt
   cli.injectPrompt({
     name: 'eslintConfig',
     when: answers => answers.features.includes('linter'),
@@ -40,7 +42,8 @@ module.exports = cli => {
       }
     ]
   })
-
+  
+  // injectPrompt: 同上，按顺序执行
   cli.injectPrompt({
     name: 'lintOn',
     message: 'Pick additional lint features:',

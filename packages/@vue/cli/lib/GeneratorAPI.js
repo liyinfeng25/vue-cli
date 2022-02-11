@@ -71,6 +71,7 @@ class GeneratorAPI {
   }
 
   /**
+   * 将文件的 middleware push 到 fileMiddlewares 中
    * Inject a file processing middleware.
    *
    * @private
@@ -162,6 +163,7 @@ class GeneratorAPI {
   }
 
   /**
+   * 检查项目中是否含义某个插件
    * Check if the project has a given plugin.
    *
    * @param {string} id - Plugin id, can omit the (@vue/|vue-|@scope/vue)-cli-plugin- prefix
@@ -206,6 +208,7 @@ class GeneratorAPI {
   }
 
   /**
+   * 扩展  package.json 的配置
    * Extend the package.json of the project.
    * Also resolves dependency conflicts between plugins.
    * Tool configuration fields may be extracted into standalone files before
@@ -269,6 +272,7 @@ class GeneratorAPI {
   }
 
   /**
+   * 渲染模板文件方法
    * Render template files into the virtual files tree object.
    *
    * @param {string | object | FileMiddleware} source -
@@ -334,6 +338,7 @@ class GeneratorAPI {
   }
 
   /**
+   * 字符串写入文件后的回调函数
    * Push a callback to be called when the files have been written to disk.
    *
    * @param {function} cb
@@ -357,6 +362,7 @@ class GeneratorAPI {
   }
 
   /**
+   * generator 退出时，生成信息提示
    * Add a message to be printed when the generator exits (after any other standard messages).
    *
    * @param {} msg String or value to print after the generation is completed
@@ -367,6 +373,7 @@ class GeneratorAPI {
   }
 
   /**
+   * 将 json 文件生成 JS 配置文件
    * convenience method for generating a js config file from json
    */
   genJSConfig (value) {
@@ -410,6 +417,7 @@ class GeneratorAPI {
   }
 
   /**
+   * 向文件中注入 import 语法的方法
    * Add import statements to a file.
    */
   injectImports (file, imports) {
@@ -423,6 +431,7 @@ class GeneratorAPI {
   }
 
   /**
+   * 向 Vue 根实例中添加选项
    * Add options to the root Vue instance (detected by `new Vue`).
    */
   injectRootOptions (file, options) {

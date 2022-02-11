@@ -54,11 +54,6 @@ module.exports = (api, options) => {
     // js is handled by cli-plugin-babel ---------------------------------------
 
     // vue-loader --------------------------------------------------------------
-    let cacheLoaderPath
-    try {
-      cacheLoaderPath = require.resolve('cache-loader')
-    } catch (e) {}
-
     if (vueMajor === 2) {
       // for Vue 2 projects
       const vueLoaderCacheConfig = api.genCacheConfig('vue-loader', {
@@ -76,25 +71,20 @@ module.exports = (api, options) => {
               : 'vue/dist/vue.runtime.esm.js'
           )
 
-      if (cacheLoaderPath) {
-        webpackConfig.module
-          .rule('vue')
-            .test(/\.vue$/)
-            .use('cache-loader')
-              .loader(cacheLoaderPath)
-              .options(vueLoaderCacheConfig)
-      }
-
       webpackConfig.module
         .rule('vue')
           .test(/\.vue$/)
+          .use('cache-loader')
+            .loader(require.resolve('cache-loader'))
+            .options(vueLoaderCacheConfig)
+            .end()
           .use('vue-loader')
             .loader(require.resolve('@vue/vue-loader-v15'))
             .options(Object.assign({
               compilerOptions: {
                 whitespace: 'condense'
               }
-            }, cacheLoaderPath ? vueLoaderCacheConfig : {}))
+            }, vueLoaderCacheConfig))
 
       webpackConfig
         .plugin('vue-loader')
@@ -123,24 +113,21 @@ module.exports = (api, options) => {
               : 'vue/dist/vue.runtime.esm-bundler.js'
           )
 
-      if (cacheLoaderPath) {
-        webpackConfig.module
-          .rule('vue')
-            .test(/\.vue$/)
-            .use('cache-loader')
-              .loader(cacheLoaderPath)
-              .options(vueLoaderCacheConfig)
-      }
-
       webpackConfig.module
         .rule('vue')
           .test(/\.vue$/)
+          .use('cache-loader')
+            .loader(require.resolve('cache-loader'))
+            .options(vueLoaderCacheConfig)
+            .end()
           .use('vue-loader')
             .loader(require.resolve('vue-loader'))
             .options({
               ...vueLoaderCacheConfig,
               babelParserPlugins: ['jsx', 'classProperties', 'decorators-legacy']
             })
+            .end()
+          .end()
 
       webpackConfig
         .plugin('vue-loader')
