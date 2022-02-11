@@ -28,6 +28,7 @@ module.exports = async function getVersions () {
   const daysPassed = (Date.now() - lastChecked) / (60 * 60 * 1000 * 24)
 
   let error
+  // 距离上次检查更新超过一天
   if (daysPassed > 1) {
     // if we haven't check for a new version in a day, wait for the check
     // before proceeding
@@ -38,10 +39,11 @@ module.exports = async function getVersions () {
       error = e
     }
   } else {
+    // 后台更新
     // Otherwise, do a check in the background. If the result was updated,
     // it will be used for the next 24 hours.
     // don't throw to interrupt the user if the background check failed
-    getAndCacheLatestVersion(cached, includePrerelease).catch(() => {})
+    getAndCacheLatestVersion(cached, includePrerelease).catch(() => {})  
     latest = cached
   }
 

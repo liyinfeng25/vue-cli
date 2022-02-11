@@ -199,6 +199,7 @@ module.exports = class Generator {
   } = {}) {
     await this.initPlugins()
 
+    // 将配置文件提取
     // save the file system before applying plugin for comparison
     const initialFiles = Object.assign({}, this.files)
     // extract configs from package.json into dedicated files.

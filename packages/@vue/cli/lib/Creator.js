@@ -81,12 +81,15 @@ module.exports = class Creator extends EventEmitter {
     const { run, name, context, afterInvokeCbs, afterAnyInvokeCbs } = this
     if (!preset) {
       if (cliOptions.preset) {
+        // 有 -p 选项，调用 resolvePreset 去解析 preset
         // vue create foo --preset bar
         preset = await this.resolvePreset(cliOptions.preset, cliOptions.clone)
       } else if (cliOptions.default) {
+        // 有 --default 选项， 忽略提示符并使用默认预设选项
         // vue create foo --default
         preset = defaults.presets['Default (Vue 3)']
       } else if (cliOptions.inlinePreset) {
+        // 有--inlinePreset 选项，采用内联的 JSON 字符串预设选项
         // vue create foo --inlinePreset {...}
         try {
           preset = JSON.parse(cliOptions.inlinePreset)
@@ -120,7 +123,8 @@ module.exports = class Creator extends EventEmitter {
     preset.plugins['@vue/cli-service'] = Object.assign({
       projectName: name
     }, preset)
-
+     
+    // 创建项目时省略默认组件中的新手指导信息
     if (cliOptions.bare) {
       preset.plugins['@vue/cli-service'].bare = true
     }
@@ -139,8 +143,7 @@ module.exports = class Creator extends EventEmitter {
       preset.plugins['@vue/cli-plugin-vuex'] = {}
     }
 
-    // console.log('packageManager ==>',  loadOptions().packageManager, hasYarn(), hasPnpm3OrLater());  // yarn true false
-    // 检查 package 管理方式
+    // 步骤1：识别包管理工具 可见优先级是从用户指定到.vuerc默认再到yarn和npm等的兜底
     const packageManager = (
       cliOptions.packageManager ||
       loadOptions().packageManager ||
@@ -149,18 +152,18 @@ module.exports = class Creator extends EventEmitter {
     )
 
     await clearConsole()
-    // 创建 pm 实例，主要用于 判断版本、安装依赖等
+    // 步骤2：创建 pm 实例，新建出来包管理对象 后续install等都是这个对象提供的方法
     const pm = new PackageManager({ context, forcePackageManager: packageManager })
 
-    //Tag: 在  ***  目录下创建项目
+    // 步骤3：打印信息：✨  Creating project in ***
     log(`✨  Creating project in ${chalk.yellow(context)}.`)
     this.emit('creation', { event: 'creating' })
 
-    // 获取最新的CLI插件版本
+    // 步骤4：通过 getVersions() 函数获取最新 cli 版本
     // get latest CLI plugin version
     const { latestMinor } = await getVersions()
 
-    // 确认 package.json 文件内容，将 devDependencies 依赖进行更新（以下会选择对应版本）
+    // 步骤5：这里生成的就是默认package.json的对象
     // generate package.json with plugin dependencies
     const pkg = {
       name,
@@ -169,6 +172,8 @@ module.exports = class Creator extends EventEmitter {
       devDependencies: {},
       ...resolvePkg(context)
     }
+
+    // 步骤6：遍历操作预设/自定义的 plugins，没有版本的话，这是对应的版本号
     const deps = Object.keys(preset.plugins)
     deps.forEach(dep => {
       if (preset.plugins[dep]._isPreset) {
@@ -188,12 +193,13 @@ module.exports = class Creator extends EventEmitter {
       pkg.devDependencies[dep] = version
     })
     
-    // 写 package.json 文件内容
+    // 步骤7：写 package.json 文件内容
     // write package.json
     await writeFileTree(context, {
       'package.json': JSON.stringify(pkg, null, 2)
     })
 
+    // 步骤8：使用pnpm管理的话 则需要在 .npmrc 中指定 shamefully-hoist/shamefully-flatten
     // generate a .npmrc file for pnpm, to persist the `shamefully-flatten` flag
     if (packageManager === 'pnpm') {
       const pnpmConfig = hasPnpmVersionOrLater('4.0.0')
@@ -207,6 +213,7 @@ module.exports = class Creator extends EventEmitter {
 
     // intilaize git repository before installing deps
     // so that vue-cli-service can setup git hooks.
+    // 步骤9：判断是否需要 git 初始化
     const shouldInitGit = this.shouldInitGit(cliOptions)
     if (shouldInitGit) {
       log(`🗃  Initializing git repository...`)
@@ -214,8 +221,7 @@ module.exports = class Creator extends EventEmitter {
       await run('git init')
     }
 
-    //Tag: 安装 Cli 插件
-    // install plugins
+    // 步骤10：打印信息，并 install plugins
     log(`⚙\u{fe0f}  Installing CLI plugins. This might take a while...`)
     log()
     this.emit('creation', { event: 'plugins-install' })
@@ -227,8 +233,7 @@ module.exports = class Creator extends EventEmitter {
       await pm.install()
     }
 
-    //Tag: 生成配置
-    // run generator
+    // 步骤11：打印信息
     log(`🚀  Invoking generators...`)
     this.emit('creation', { event: 'invoking-generators' })
     const plugins = await this.resolvePlugins(preset.plugins, pkg)
@@ -1034,6 +1039,7 @@ module.exports = class Creator extends EventEmitter {
     return prompts
   }
 
+  // 判断是否需要 git 初始化
   shouldInitGit (cliOptions) {
     if (!hasGit()) {
       return false
