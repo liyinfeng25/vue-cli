@@ -237,9 +237,9 @@ module.exports = class Creator extends EventEmitter {
     log(`🚀  Invoking generators...`)
     this.emit('creation', { event: 'invoking-generators' })
     const plugins = await this.resolvePlugins(preset.plugins, pkg)
-    // console.log('afterInvokeCbs', afterInvokeCbs);
-    // console.log('afterAnyInvokeCbs', afterAnyInvokeCbs);
 
+
+    // 步骤1：传入的参数 package.json 的对象，引入的 npm 包集合，执行完 Generator 的回调数组，执行每一项 invoke 的回调数组
     const generator = new Generator(context, {
       pkg,
       plugins,
@@ -336,13 +336,12 @@ module.exports = class Creator extends EventEmitter {
     }
     */
     
-    //Tag: 调用 genetator 函数，生成对应的文件
+    // 步骤2： 直接执行了 generate 方法 传入了预设中的 useConfigFiles 的设置
     await generator.generate({
       extractConfigFiles: preset.useConfigFiles
     })
 
-    //Tag: 安装额外配置
-    // install additional deps (injected by generators)
+    //步骤1： 安装额外配置
     log(`📦  Installing additional dependencies...`)
     this.emit('creation', { event: 'deps-install' })
     log()
@@ -350,7 +349,7 @@ module.exports = class Creator extends EventEmitter {
       await pm.install()
     }
 
-    //Tag: 依赖安装之后，执行对应的回调函数
+    // 步骤2：在 creation 生命周期，执行对应的回调函数
     // run complete cbs if any (injected by generators)
     log(`⚓  Running completion hooks...`)
     this.emit('creation', { event: 'completion-hooks' })
@@ -361,7 +360,7 @@ module.exports = class Creator extends EventEmitter {
       await cb()
     }
 
-    //Tag: 生成 README.md 文件
+    // 步骤3：生成 README.md
     if (!generator.files['README.md']) {
       log()
       log('📄  Generating README.md...')
@@ -370,6 +369,7 @@ module.exports = class Creator extends EventEmitter {
       })
     }
 
+    // 步骤4：默认使用git配置的时候 脚手架会在生成项目之后就执行一次 add和commit
     // commit initial state
     let gitCommitFailed = false
     if (shouldInitGit) {
@@ -387,7 +387,7 @@ module.exports = class Creator extends EventEmitter {
       }
     }
 
-    //Tag: 构建项目文件成功提示，展示快速开始命令
+    // 步骤5：构建项目文件成功提示，展示快速开始命令
     log()
     log(`🎉  Successfully created project ${chalk.yellow(name)}.`)
     if (!cliOptions.skipGetStarted) {
