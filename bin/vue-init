@@ -56,16 +56,22 @@ help()
 /**
  * Settings.
  */
-
-let template = program.args[0]
-const hasSlash = template.indexOf('/') > -1
-const rawName = program.args[1]
-const inPlace = !rawName || rawName === '.'
+// 获取模板名称
+let template = program.args[0] 
+// 模板名称是否有斜杠(判断是官方模板还是非官方模板)
+const hasSlash = template.indexOf('/') > -1  
+// 获取项目名称
+const rawName = program.args[1]  
+// 检查项目名称是否为空 || 是否是 .
+const inPlace = !rawName || rawName === '.' 
 const name = inPlace ? path.relative('../', process.cwd()) : rawName
 const to = path.resolve(rawName || '.')
+// 是否采用 clone 方式下载模板，默认是false
 const clone = program.clone || false
 
+// 将模板下载到 .vue-templates 路径，并非直接下载到创建项目的路径（缓存）
 const tmp = path.join(home, '.vue-templates', template.replace(/[\/:]/g, '-'))
+
 if (program.offline) {
   console.log(`> Use cached template at ${chalk.yellow(tildify(tmp))}`)
   template = tmp
@@ -80,6 +86,7 @@ process.on('exit', () => {
   console.log()
 })
 
+// 检查项目名称不通过 || 已经存在项目目录，让用户进行选择是否继续
 if (inPlace || exists(to)) {
   inquirer.prompt([{
     type: 'confirm',
@@ -100,11 +107,15 @@ if (inPlace || exists(to)) {
  * Check, download and generate the project.
  */
 
+// 检查、下载、生成对应文件到当前目录（核心函数） 
 function run () {
-  // check if template is local
+  // 检查模板是否是本地模本，/^[./]|(^[a-zA-Z]:)/.test('webpack') 使用本地模板
   if (isLocalPath(template)) {
+    // 确认项目目录
     const templatePath = getTemplatePath(template)
+    // 检查项目目录是否存在
     if (exists(templatePath)) {
+      // 使用本地模板
       generate(name, templatePath, to, err => {
         if (err) logger.fatal(err)
         console.log()
@@ -114,9 +125,11 @@ function run () {
       logger.fatal('Local template "%s" not found.', template)
     }
   } else {
+    // 首先会检查对应node版本和vue-cli是否存在新版本
     checkVersion(() => {
+      // 没有 /，代表使用官方模板
       if (!hasSlash) {
-        // use official templates
+        // 官方模板路径：vuejs-templates/webpack
         const officialTemplate = 'vuejs-templates/' + template
         if (template.indexOf('#') !== -1) {
           downloadAndGenerate(officialTemplate)
@@ -130,6 +143,7 @@ function run () {
           downloadAndGenerate(officialTemplate)
         }
       } else {
+        // 有 /，代表使用非官方模板，如：vue init my-templates/webpack my-project，https://github.com/my-templates/webpack
         downloadAndGenerate(template)
       }
     })
@@ -142,14 +156,19 @@ function run () {
  * @param {String} template
  */
 
+// 下载远程模板：使用 download-git-repo 来下载对应的模块仓库，传入的变量最终拼接成：https://github.com/vuejs-templates/webpack
 function downloadAndGenerate (template) {
   const spinner = ora('downloading template')
   spinner.start()
   // Remove if local template exists
   if (exists(tmp)) rm(tmp)
+
+  // 下载模板
   download(template, tmp, { clone }, err => {
     spinner.stop()
     if (err) logger.fatal('Failed to download repo ' + template + ': ' + err.message.trim())
+    
+    // 进行用户提问，确认：项目名称、项目描述、项目创建者、等等信息
     generate(name, tmp, to, err => {
       if (err) logger.fatal(err)
       console.log()
